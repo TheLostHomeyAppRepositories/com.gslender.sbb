@@ -1,0 +1,38 @@
+{
+  "id": "com.gslender.sbb",
+  "version": "1.0.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "brandColor": "#2f0fbb",
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Smart By Bond"
+  },
+  "description": {
+    "en": "Connect your Smart By Bond ceiling fans"
+  },
+  "category": [
+    "climate"
+  ],
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  },
+  "author": {
+    "name": "Grant Slender",
+    "email": "gslender@gmail.com"
+  },
+  "source": "https://github.com/gslender/com.gslender.sbb",
+  "bugs": {
+    "url": "https://github.com/gslender/com.gslender.sbb/issues"
+  },
+  "api": {
+    "checkStatus": {
+      "method": "get",
+      "path": "/checkStatus"
+    }
+  }
+}
