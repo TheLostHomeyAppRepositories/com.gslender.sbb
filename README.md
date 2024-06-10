@@ -1,2 +1,2 @@
-# com.gslender.bondbridge
+# com.gslender.sbb
 This Homey App uses the SBB Local Token that's provided in the Bond iOS app device settings, to authorise and allow the Homey App to connect to your Smart By Bond (SBB) ceiling fans.
