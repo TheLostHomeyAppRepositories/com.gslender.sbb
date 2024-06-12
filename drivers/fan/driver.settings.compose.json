@@ -1,0 +1,24 @@
+[
+    {
+      "type": "group",
+      "label": {
+        "en": "Device details"
+      },
+      "children": [
+        {
+          "id": "ipAddress",
+          "type": "text",
+          "label": { "en": "IP Address" },
+          "value": "0.0.0.0",
+          "hint": { "en": "Specific device IP Address as shown in the Bond Mobile App." }
+        },
+        {
+          "id": "token",
+          "type": "text",
+          "label": { "en": "Token" },
+          "value": "aa11bb22cc33",
+          "hint": { "en": "Specific device Token as shown in the Bond Mobile App." }
+        }
+      ]
+    }
+  ]

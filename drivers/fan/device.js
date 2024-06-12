@@ -13,50 +13,55 @@ class FanDevice extends Device {
    */
   async onInit() {
     this.log('FanDevice has been initialized');
+    const self = this;
 
     this.registerCapabilityListener("onoff", async (value) => {
+      const ipAddress = self.getSetting('ipAddress');
+      const token = self.getSetting('token');
       if (value) {
-        await this.homey.app.sendBondAction(this.getData().id, "TurnOn", {});
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "TurnOn", {});
       } else {
-        await this.homey.app.sendBondAction(this.getData().id, "TurnOff", {});
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "TurnOff", {});
       }
     });
 
 
     this.registerCapabilityListener("fan_mode", async (value) => {
+      const ipAddress = self.getSetting('ipAddress');
+      const token = self.getSetting('token');
       if (value === 'off') {
         this.setCapabilityValue('onoff', false);
-        await this.homey.app.sendBondAction(this.getData().id, "TurnOff", {});
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "TurnOff", {});
       }
       if (value === 'low') {
         this.setCapabilityValue('onoff', true);
-        await this.homey.app.sendBondAction(this.getData().id, "SetSpeed", { "argument": 1 });
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "SetSpeed", { "argument": 1 });
       }
 
       if (value === 'medium') {
         this.setCapabilityValue('onoff', true);
-        await this.homey.app.sendBondAction(this.getData().id, "SetSpeed", { "argument": 50 });
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "SetSpeed", { "argument": 50 });
       }
 
       if (value === 'high') {
         this.setCapabilityValue('onoff', true);
-        await this.homey.app.sendBondAction(this.getData().id, "SetSpeed", { "argument": 100 });
+        await this.driver.sendBondAction(ipAddress,token,this.getData().id, "SetSpeed", { "argument": 100 });
       }
     });
   }
 
-  async updateCapabilities(state) {    
-    if (hasProperties(state,["power","speed"])) {
-      this.setCapabilityValue('onoff', state.data.power === 1);
-      if (state.data.speed == 100) {
-        this.setCapabilityValue('fan_mode', 'high');
-      } else if (state.data.speed == 50) {
-        this.setCapabilityValue('fan_mode', 'medium');
-      } else {
-        this.setCapabilityValue('fan_mode', 'low');
-      }
-    }
-  }
+  // async updateCapabilities(state) {    
+  //   if (hasProperties(state,["power","speed"])) {
+  //     this.setCapabilityValue('onoff', state.data.power === 1);
+  //     if (state.data.speed == 100) {
+  //       this.setCapabilityValue('fan_mode', 'high');
+  //     } else if (state.data.speed == 50) {
+  //       this.setCapabilityValue('fan_mode', 'medium');
+  //     } else {
+  //       this.setCapabilityValue('fan_mode', 'low');
+  //     }
+  //   }
+  // }
 }
 
 

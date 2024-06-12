@@ -1,1 +1,18 @@
-{}
+{
+    "save": "Create Device",
+    "saving": "Verifying Device",
+    "noApiKeyFound": "No API key provided, please configure it in application settings.",
+    "settings": {
+        "title": "Application settings",
+        "token": "Local Token",
+        "tokenHelp": "The local token is required to connect to the SBB device - the link below explains where to get this.",
+        "tokenRequired": "Please provide a local token.",
+        "saved": "Settings has now been saved."
+    },
+    "device": {
+        "create": "Connect to a SBB device",
+        "ipAddress": "Device IP Address",
+        "ipAddressHelp": "This is the unique IP address of your SBB device.",
+        "ipAddressRequired": "Please provide the IP address of your SBB device."
+    }
+}
