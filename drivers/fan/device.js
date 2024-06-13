@@ -1,11 +1,7 @@
 'use strict';
 
 const { Device } = require('homey');
-const OKAY_STRING = 'ok';
-
-function hasProperties(obj, props) {
-  return props.every(prop => obj.hasOwnProperty(prop));
-}
+const { VALID_TOKEN_STRING, OKAY_STRING, FAILED_STRING, INVALID_TOKEN_STRING, INVALID_IPADDRESS_STRING, isEmptyOrUndefined, isValidIPAddress, hasProperties } = require('./const.js');
 
 class FanDevice extends Device {
 
@@ -63,6 +59,9 @@ class FanDevice extends Device {
 
   async onSettings({ oldSettings, newSettings, changedKeys }) {
     if (changedKeys.includes("ipAddress") || changedKeys.includes("token")) {
+
+      if (!isValidIPAddress(newSettings.ipAddress)) throw new Error(INVALID_IPADDRESS_STRING);
+      if (isEmptyOrUndefined(newSettings.token)) throw new Error(INVALID_TOKEN_STRING);
       const response = await this.driver.checkSettings(newSettings.ipAddress, newSettings.token);
       if (response.status != VALID_TOKEN_STRING) {
         throw new Error(response.status);

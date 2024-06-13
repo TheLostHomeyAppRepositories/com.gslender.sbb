@@ -4,5 +4,8 @@
   },
   "1.0.1": {
     "en": "Fixed a few obvious bugs and added device update state"
+  },
+  "1.0.2": {
+    "en": "minor bug fix"
   }
 }
