@@ -32,6 +32,7 @@ class FanDriver extends Driver {
     this.log(`${this.id} init...`);
     this.enableRespDebug = true;
   }
+
   /**
    * onPairListDevices is called when a user is adding a device
    * and the 'list_devices' view is called.
@@ -47,10 +48,7 @@ class FanDriver extends Driver {
     session.setHandler("check_details", async function (data) {
       self.log('check_details data=', data);
       // now call the app to check that it is valid
-      const fmw = await self.getBondFirmware(data.ipAddress);
-      if (fmw.status != OKAY_STRING) throw new Error(FAILED_STRING);
-      const response = await self.getBondDevices(data.ipAddress, data.token);
-      self.log('getBondDevices.response=', response);
+      const response = await self.checkSettings(data.ipAddress, data.token);
       if (response.status === VALID_TOKEN_STRING) {
         return response.data;
       } else {
@@ -59,6 +57,12 @@ class FanDriver extends Driver {
     });
 
     await session.showView("device_ip_n_token");
+  }
+
+  async checkSettings(ipAddress, token) {
+    const fmw = await this.getBondFirmware(ipAddress);
+    if (fmw.status != OKAY_STRING) return fmw;
+    return await this.getBondDevices(ipAddress, token);    
   }
 
 
@@ -195,13 +199,9 @@ class FanDriver extends Driver {
     return respData;
   }
 
-  ///////////////////////////////
-
-
-
-  async getBondDeviceState(deviceID) {
-    if (!isValidIPAddress(this.ipaddress) || isEmptyOrUndefined(this.token)) return {};
-    const uri = `http://${this.ipaddress}/v2/devices/${deviceID}/state`;
+  async getBondDeviceState(ipAddress, token, deviceID,) {
+    if (!isValidIPAddress(ipAddress) || isEmptyOrUndefined(token)) return {};
+    const uri = `http://${ipAddress}/v2/devices/${deviceID}/state`;
     if (this.enableRespDebug) this.log(`getBondDeviceState() ${uri}`);
     let respData = {};
 
@@ -211,13 +211,14 @@ class FanDriver extends Driver {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'BOND-Token': this.token
+          'BOND-Token': token
         }
       });
       respData.data = {};
       if (response.status == 200) {
         respData.status = OKAY_STRING;
         respData.data = await response.json();
+        if (this.enableRespDebug) this.log(`fetch.response=${JSON.stringify(respData)}`);
       }
 
       if (response.status == 401) {
@@ -231,19 +232,6 @@ class FanDriver extends Driver {
     return respData;
   }
 
-
-  async pollState() {
-    // update the devices state
-    const drivers = this.homey.drivers.getDrivers();
-    for (const driver in drivers) {
-      const devices = this.homey.drivers.getDriver(driver).getDevices();
-      for (const device of devices) {
-        const deviceID = device.getData().id;
-        const state = await this.getBondDeviceState(deviceID);
-        if (state.status === OKAY_STRING) device.updateCapabilities(state);
-      }
-    }
-  }
 }
 
 module.exports = FanDriver;
