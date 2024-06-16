@@ -7,5 +7,8 @@
   },
   "1.0.2": {
     "en": "minor bug fix"
+  },
+  "1.0.3": {
+    "en": "log device details"
   }
 }

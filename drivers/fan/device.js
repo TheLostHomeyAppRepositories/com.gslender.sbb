@@ -16,37 +16,43 @@ class FanDevice extends Device {
       const ipAddress = self.getSetting('ipAddress');
       const token = self.getSetting('token');
       if (value) {
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "TurnOn", {});
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "TurnOn", {});
       } else {
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "TurnOff", {});
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "TurnOff", {});
       }
     });
-
 
     this.registerCapabilityListener("fan_mode", async (value) => {
       const ipAddress = self.getSetting('ipAddress');
       const token = self.getSetting('token');
       if (value === 'off') {
-        this.setCapabilityValue('onoff', false);
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "TurnOff", {});
+        self.setCapabilityValue('onoff', false);
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "TurnOff", {});
       }
       if (value === 'low') {
-        this.setCapabilityValue('onoff', true);
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "SetSpeed", { "argument": 1 });
+        self.setCapabilityValue('onoff', true);
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "SetSpeed", { "argument": 1 });
       }
 
       if (value === 'medium') {
-        this.setCapabilityValue('onoff', true);
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "SetSpeed", { "argument": 50 });
+        self.setCapabilityValue('onoff', true);
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "SetSpeed", { "argument": 50 });
       }
 
       if (value === 'high') {
-        this.setCapabilityValue('onoff', true);
-        await this.driver.sendBondAction(ipAddress, token, this.getData().id, "SetSpeed", { "argument": 100 });
+        self.setCapabilityValue('onoff', true);
+        await self.driver.sendBondAction(ipAddress, token, self.getData().id, "SetSpeed", { "argument": 100 });
       }
     });
 
+    /// get device details and update persistent settings
+    const details = await getDeviceDetails();
+    this.log(JSON.stringify(details));
+    this.setSettings({ details: details });
+
+    /// get device state
     await this.getDeviceState();
+
     /// now poll every 10 sec for current state
     this.pollingId = this.homey.setInterval(async () => {
       await this.getDeviceState();
@@ -69,6 +75,13 @@ class FanDevice extends Device {
         return super.onSettings({ oldSettings, newSettings, changedKeys });
       }
     }
+  }
+
+  async getDeviceDetails() {
+    const ipAddress = this.getSetting('ipAddress');
+    const token = this.getSetting('token');
+    const deviceID = this.getData().id;
+    return await this.driver.getBondDevice(ipAddress, token, deviceID);
   }
 
   async getDeviceState() {
