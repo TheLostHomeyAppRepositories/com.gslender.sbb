@@ -10,5 +10,17 @@
   },
   "1.0.3": {
     "en": "log device details"
+  },
+  "1.0.4": {
+    "en": "minor bug"
+  },
+  "1.0.5": {
+    "en": "Fix device properties"
+  },
+  "1.0.6": {
+    "en": "new bond api and fan/light support"
+  },
+  "1.0.7": {
+    "en": "fixed missing fan_speed capability"
   }
 }

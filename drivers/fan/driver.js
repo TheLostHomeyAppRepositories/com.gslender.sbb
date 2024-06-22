@@ -1,8 +1,7 @@
 'use strict';
 
 const { Driver } = require('homey');
-const { fetch } = require('undici');
-const { VALID_TOKEN_STRING, OKAY_STRING, FAILED_STRING, INVALID_TOKEN_STRING, INVALID_IPADDRESS_STRING, isEmptyOrUndefined, isValidIPAddress, hasProperties } = require('./const.js');
+const Bond = require('../../lib/bond');
 
 class FanDriver extends Driver {
 
@@ -21,13 +20,11 @@ class FanDriver extends Driver {
   }
 
   async onPair(session) {
-    const self = this;
-
-    session.setHandler("check_details", async function (data) {
-      self.log('check_details data=', data);
+    session.setHandler("check_details", async (data) =>  {
+      this.log('check_details data=', data);
       // now call the app to check that it is valid
-      const response = await self.checkSettings(data.ipAddress, data.token);
-      if (response.status === VALID_TOKEN_STRING) {
+      const response = await this.checkSettings(data.ipAddress, data.token);
+      if (response.status === Bond.VALID_TOKEN) {
         return response.data;
       } else {
         throw new Error(response.status);
@@ -38,12 +35,19 @@ class FanDriver extends Driver {
   }
 
   async checkSettings(ipAddress, token) {
-    const fmw = await this.getBondFirmware(ipAddress);
-    if (fmw.status != OKAY_STRING) return fmw;
-    return await this.getBondDevices(ipAddress, token);    
+    const bond = new Bond(ipAddress,token,this.log,true);
+    const fmw = await bond.getBondFirmware();
+    if (fmw.status != Bond.OKAY) return fmw;
+    const devices = await bond.getBondDevices();
+    this.log(`devices = ${JSON.stringify(devices)}`);
+    if (Array.isArray(devices.data) && devices.data.length > 0 && devices.data[0]) {
+      const device = await bond.getBondDevice(devices.data[0]);
+      this.log(`device = ${JSON.stringify(device)}`);
+      return device;
+    }
   }
 
-
+/*
   async getBondDevices(ipAddress, token) {
     if (!isValidIPAddress(ipAddress)) return { status: INVALID_IPADDRESS_STRING };
     const uri = `http://${ipAddress}/v2/devices`;
@@ -176,6 +180,39 @@ class FanDriver extends Driver {
     }
     return respData;
   }
+  
+  async getBondDeviceProperties(ipAddress, token, deviceID,) {
+      if (!isValidIPAddress(ipAddress) || isEmptyOrUndefined(token)) return {};
+      const uri = `http://${ipAddress}/v2/devices/${deviceID}/properties`;
+      if (this.enableRespDebug) this.log(`getDeviceProperties() ${uri}`);
+      let respData = {};
+  
+      try {
+        respData.status = FAILED_STRING;
+        const response = await fetch(uri, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'BOND-Token': token
+          }
+        });
+        respData.data = {};
+        if (response.status == 200) {
+          respData.status = OKAY_STRING;
+          respData.data = await response.json();
+          if (this.enableRespDebug) this.log(`fetch.response=${JSON.stringify(respData)}`);
+        }
+  
+        if (response.status == 401) {
+          respData.status = INVALID_TOKEN_STRING;
+          this.homey.clearInterval(this.pollTimer);
+          this.log(`Incorrect Token !?`);
+        }
+      } catch (e) {
+        if (this.enableRespDebug) this.log(`getDeviceProperties() ERROR: ${e}`);
+      }
+      return respData;
+  }
 
   async getBondDeviceState(ipAddress, token, deviceID,) {
     if (!isValidIPAddress(ipAddress) || isEmptyOrUndefined(token)) return {};
@@ -209,6 +246,7 @@ class FanDriver extends Driver {
     }
     return respData;
   }
+    */
 
 }
 
