@@ -25,5 +25,11 @@
   },
   "1.0.8": {
     "en": "Added fan_direction"
+  },
+  "1.0.9": {
+    "en": "bug in fan device"
+  },
+  "1.0.10": {
+    "en": "Further bug fixes"
   }
 }
