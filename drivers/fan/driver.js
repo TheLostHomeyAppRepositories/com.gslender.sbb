@@ -45,6 +45,7 @@ class FanDriver extends Driver {
       this.log(`device = ${JSON.stringify(device)}`);
       return device;
     }
+    return devices;
   }
 
 /*

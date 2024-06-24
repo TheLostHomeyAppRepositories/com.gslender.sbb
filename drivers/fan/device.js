@@ -4,6 +4,7 @@ const { Device } = require('homey');
 const Bond = require('../../lib/bond');
 
 function hasProperties(obj, props) {
+  if (!obj) return false;
   return props.every(prop => obj.hasOwnProperty(prop));
 }
 
@@ -18,6 +19,9 @@ class FanDevice extends Device {
       this.getSetting('token'),
       this.log
     );
+    if (!this.bond.isIpAddressValid()) throw new Error("INVALID IP ADDRESS");
+    if (!this.bond.isTokenValid()) throw new Error("INVALID TOKEN");
+   
     await this.initialize();
 
     /// get device state
@@ -128,28 +132,36 @@ class FanDevice extends Device {
       });
     }
 
+    this.addCapability("fan_direction");    
+    this.registerCapabilityListener("fan_direction", async (value) => {  
+      await this.bond.sendBondAction(this.getData().id, "SetDirection", { "argument": Number(value) });      
+    });
   }
   
   async updateCapabilityValues(state) {
     if (hasProperties(this.props.data, ["feature_light"]) && this.props.data.feature_light) {
       // fan with light   
-      if (hasProperties(state, ["light"])) {
+      if (hasProperties(state.data, ["light"])) {
         this.setCapabilityValue('onoff', state.data.light === 1);
       }
       if (hasProperties(this.props.data, ["feature_brightness"]) && this.props.data.feature_brightness) {
 
-        if (hasProperties(state, ["brightness"])) {
+        if (hasProperties(state.data, ["brightness"])) {
           this.setCapabilityValue('dim', state.data.brightness/100);
         }
       }
     } else {
       // basic fan (no light)
-      if (hasProperties(state, ["power"])) {
+      if (hasProperties(state.data, ["power"])) {
         this.setCapabilityValue('onoff', state.data.power === 1);
       }
     }
 
-    if (hasProperties(state, ["speed"])) {
+    if (hasProperties(state.data, ["direction"])) {
+      this.setCapabilityValue('fan_direction', state.data.direction);
+    }
+
+    if (hasProperties(state.data, ["speed"])) {
       if (hasProperties(this.props.data, ["max_speed"])) {
         // fan with max_speed   
         this.setCapabilityValue('fan_speed', state.data.speed);
