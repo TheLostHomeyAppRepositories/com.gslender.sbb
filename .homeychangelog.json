@@ -31,5 +31,14 @@
   },
   "1.0.10": {
     "en": "Further bug fixes"
+  },
+  "1.0.11": {
+    "en": "Fix invalid token check"
+  },
+  "1.0.12": {
+    "en": "Further token bugs fixed"
+  },
+  "1.0.13": {
+    "en": "Shared Bond api optimisations"
   }
 }
