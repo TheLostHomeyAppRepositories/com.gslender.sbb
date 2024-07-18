@@ -40,5 +40,8 @@
   },
   "1.0.13": {
     "en": "Shared Bond api optimisations"
+  },
+  "1.0.14": {
+    "en": "ensure device ID unique"
   }
 }

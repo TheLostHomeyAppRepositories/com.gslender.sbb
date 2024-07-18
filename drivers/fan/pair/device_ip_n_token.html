@@ -64,7 +64,7 @@
 
         function createSBBDevice(result) {
             const sbbName = result?.name ?? `SBB Fan@${ipAddressElement.value}`;
-            const sbbId = result?.id ?? ipAddressElement.value;
+            const sbbId = `id${result?.id}@${ipAddressElement.value}`;
             Homey.createDevice({
                 name: sbbName,
                 data: {
