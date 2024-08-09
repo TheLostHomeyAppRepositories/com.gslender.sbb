@@ -14,23 +14,35 @@ class FanDevice extends Device {
    * onInit is called when the device is initialized.
    */
   async onInit() {
+
     this.bond = new Bond(
       this.getSetting('ipAddress'),
       this.getSetting('token'),
       this.log
     );
-    if (!this.bond.isIpAddressValid()) throw new Error("INVALID IP ADDRESS");
-    if (!this.bond.isTokenValid()) throw new Error("INVALID TOKEN");
-   
-    await this.initialize();
 
-    /// get device state
-    await this.getDeviceState();
+    if (this.bond.isIpAddressValid() && this.bond.isTokenValid()) {
+      const response = await this.driver.checkSettings(this.getSetting('ipAddress'), this.getSetting('token'));
+      if (response.status != Bond.VALID_TOKEN) {
 
-    /// now poll every 10 sec for current state
-    this.pollingId = this.homey.setInterval(async () => {
-      await this.getDeviceState();
-    }, 10000);
+        await this.initialize();
+
+        this.homey.setTimeout(async () => {
+          /// get device state
+          await this.getDeviceState();
+        }, this.getRandomNumber(750, 1750));
+
+
+        /// now poll every 10 sec for current state
+        this.pollingId = this.homey.setInterval(async () => {
+          await this.getDeviceState();
+        }, 10000);
+      }
+    }
+  }
+
+  getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   async onUninit() {
@@ -43,13 +55,19 @@ class FanDevice extends Device {
   }
 
   async onSettings({ oldSettings, newSettings, changedKeys }) {
-    if (changedKeys.includes("ipAddress") || changedKeys.includes("token")) { 
+    if (changedKeys.includes("ipAddress") || changedKeys.includes("token")) {
       if (!this.bond.checkValidIpAddress(newSettings.ipAddress)) throw new Error("INVALID IP ADDRESS");
       if (this.bond.isEmptyOrUndefined(newSettings.token)) throw new Error("INVALID TOKEN");
       const response = await this.driver.checkSettings(newSettings.ipAddress, newSettings.token);
       if (response.status != Bond.VALID_TOKEN) {
         throw new Error(response.status);
       } else {
+
+        this.bond = new Bond(
+          newSettings.ipAddress,
+          newSettings.token,
+          this.log
+        );
         return super.onSettings({ oldSettings, newSettings, changedKeys });
       }
     }
@@ -71,16 +89,16 @@ class FanDevice extends Device {
 
       if (hasProperties(this.props.data, ["feature_brightness"]) && this.props.data.feature_brightness) {
         // fan with light that dims
-        this.addCapability("dim");
+        await this.addCapability("dim");
         this.registerCapabilityListener("dim", async (value) => {
           await this.bond.sendBondAction(this.getData().id, "SetBrightness", { "argument": value * 100 });
         });
       } else {
-        this.removeCapability("dim");
+        await this.removeCapability("dim");
       }
     } else {
       // basic fan (no light)
-      this.removeCapability("dim");
+      await this.removeCapability("dim");
       this.registerCapabilityListener("onoff", async (value) => {
         if (value) {
           await this.bond.sendBondAction(this.getData().id, "TurnOn", {});
@@ -92,90 +110,90 @@ class FanDevice extends Device {
 
     if (hasProperties(this.props.data, ["max_speed"])) {
       // fan with max_speed 
-      this.addCapability("fan_speed");
-      this.setCapabilityOptions("fan_speed", {
+      await this.addCapability("fan_speed");
+      await this.setCapabilityOptions("fan_speed", {
         min: 0,
         max: this.props.data.max_speed
       });
       this.registerCapabilityListener("fan_speed", async (value) => {
-        if (value == 0) { 
+        if (value == 0) {
           await this.bond.sendBondAction(this.getData().id, "TurnOff", {});
         } else {
           await this.bond.sendBondAction(this.getData().id, "TurnOn", {});
           await this.bond.sendBondAction(this.getData().id, "SetSpeed", { "argument": value });
         }
       });
-      this.removeCapability("fan_mode");
+      await this.removeCapability("fan_mode");
     } else {
       // fan without any max_speed (so assuming 3 speed mode)
-      this.addCapability("fan_mode");
-      this.removeCapability("fan_speed");
+      await this.addCapability("fan_mode");
+      await this.removeCapability("fan_speed");
       this.registerCapabilityListener("fan_mode", async (value) => {
         if (value === 'off') {
-          this.setCapabilityValue('onoff', false);
+          await this.setCapabilityValue('onoff', false);
           await this.bond.sendBondAction(this.getData().id, "TurnOff", {});
         }
         if (value === 'low') {
-          this.setCapabilityValue('onoff', true);
+          await this.setCapabilityValue('onoff', true);
           await this.bond.sendBondAction(this.getData().id, "SetSpeed", { "argument": 1 });
         }
 
         if (value === 'medium') {
-          this.setCapabilityValue('onoff', true);
+          await this.setCapabilityValue('onoff', true);
           await this.bond.sendBondAction(this.getData().id, "SetSpeed", { "argument": 50 });
         }
 
         if (value === 'high') {
-          this.setCapabilityValue('onoff', true);
+          await this.setCapabilityValue('onoff', true);
           await this.bond.sendBondAction(this.getData().id, "SetSpeed", { "argument": 100 });
         }
       });
     }
 
-    this.addCapability("fan_direction");    
-    this.registerCapabilityListener("fan_direction", async (value) => {  
-      await this.bond.sendBondAction(this.getData().id, "SetDirection", { "argument": Number(value) });      
+    await this.addCapability("fan_direction");
+    this.registerCapabilityListener("fan_direction", async (value) => {
+      await this.bond.sendBondAction(this.getData().id, "SetDirection", { "argument": Number(value) });
     });
   }
-  
+
   async updateCapabilityValues(state) {
-    this.props = this.props || {};  
-    this.props.data = this.props.data || {}; 
+    this.props = this.props || {};
+    this.props.data = this.props.data || {};
 
     if (hasProperties(this.props.data, ["feature_light"]) && this.props.data.feature_light) {
       // fan with light   
       if (hasProperties(state.data, ["light"])) {
-        this.setCapabilityValue('onoff', state.data.light === 1);
+        await this.setCapabilityValue('onoff', state.data.light === 1);
       }
       if (hasProperties(this.props.data, ["feature_brightness"]) && this.props.data.feature_brightness) {
 
         if (hasProperties(state.data, ["brightness"])) {
-          this.setCapabilityValue('dim', state.data.brightness/100);
+          await this.setCapabilityValue('dim', state.data.brightness / 100);
         }
       }
     } else {
       // basic fan (no light)
       if (hasProperties(state.data, ["power"])) {
-        this.setCapabilityValue('onoff', state.data.power === 1);
+        await this.setCapabilityValue('onoff', state.data.power === 1);
       }
     }
 
     if (hasProperties(state.data, ["direction"]) && this.hasCapability('fan_direction')) {
-      this.setCapabilityValue('fan_direction', `${state.data.direction}`);
+      await this.setCapabilityValue('fan_direction', `${state.data.direction}`);
     }
 
     if (hasProperties(state.data, ["speed"])) {
       if (hasProperties(this.props.data, ["max_speed"]) && this.hasCapability('fan_speed')) {
         // fan with max_speed   
-        this.setCapabilityValue('fan_speed', state.data.speed);
-      } else {  
+        await this.setCapabilityValue('fan_speed', state.data.speed);
+      } else {
         // fan without any max_speed (so assuming 3 speed mode)
         if (state.data.speed == 100) {
-          this.setCapabilityValue('fan_mode', 'high');
+          await this.setCapabilityValue('fan_mode', 'high');
         } else if (state.data.speed == 50) {
-          this.setCapabilityValue('fan_mode', 'medium');
+          await this.setCapabilityValue('fan_mode', 'medium');
         } else {
-          this.setCapabilityValue('fan_mode', 'low');
+          await this.setCapabilityValue('fan_mode', 'low');
         }
       }
     }
