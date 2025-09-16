@@ -49,5 +49,8 @@
   },
   "1.1.1": {
     "en": "update depends"
+  },
+  "1.1.2": {
+    "en": "Added more debug on connection failure"
   }
 }
